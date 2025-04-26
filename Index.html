@@ -123,6 +123,11 @@
       color: white;
     }
   </style>
+  
+  <!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+
 </head>
 <body>
 
@@ -257,7 +262,109 @@
   }
 
   mostrarInicio();
-</script>
+</script> <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minhas Tarefas</title>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+
+</head>
+<body>
+  <div id="main-content"></div>
+
+  <!-- Seu código JavaScript vai aqui -->
+  <script>
+    // Configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_AUTH_DOMAIN",
+      databaseURL: "SUA_DATABASE_URL",
+      projectId: "SEU_PROJECT_ID",
+      storageBucket: "SEU_STORAGE_BUCKET",
+      messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+      appId: "SEU_APP_ID"
+    };
+
+    // Inicialize o Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database(app);
+
+    let tarefas = [];
+
+    function salvarTarefas() {
+      const tarefasRef = database.ref('tarefas');
+      tarefasRef.set(tarefas);  // Salva as tarefas no Firebase
+    }
+
+    function mostrarInicio(filtro = 'todas') {
+      document.getElementById('main-content').innerHTML = `
+        <h1>Minhas Tarefas</h1>
+        <div class="filters">
+          <button onclick="mostrarInicio('todas')">Todas</button>
+          <button onclick="mostrarInicio('pendentes')">Pendentes</button>
+          <button onclick="mostrarInicio('concluidas')">Concluídas</button>
+        </div>
+        <div id="lista-tarefas"></div>
+      `;
+    
+      // Carrega as tarefas do Firebase
+      const tarefasRef = database.ref('tarefas');
+      tarefasRef.on('value', (snapshot) => {
+        tarefas = snapshot.val() || []; // Atualiza o array de tarefas
+        renderizarTarefas(filtro);
+      });
+    }
+
+    function adicionarTarefa() {
+      document.getElementById('main-content').innerHTML = `
+        <h1>Adicionar Nova Tarefa</h1>
+        <form onsubmit="salvarNovaTarefa(event)">
+          <input type="text" id="titulo" placeholder="Título da tarefa" required>
+          <select id="prioridade" required>
+            <option value="">Selecione a prioridade</option>
+            <option value="minima">Mínima</option>
+            <option value="media">Média</option>
+            <option value="maxima">Máxima</option>
+          </select>
+          <button type="submit">Salvar Tarefa</button>
+        </form>
+      `;
+    }
+
+    function salvarNovaTarefa(event) {
+      event.preventDefault();
+      const titulo = document.getElementById('titulo').value;
+      const prioridade = document.getElementById('prioridade').value;
+      const novaTarefa = { titulo, prioridade, concluido: false };
+      tarefas.push(novaTarefa);
+      salvarTarefas();
+      mostrarInicio();
+    }
+
+    function renderizarTarefas(filtro) {
+      const lista = document.getElementById('lista-tarefas');
+      lista.innerHTML = '';
+
+      tarefas.forEach((tarefa, index) => {
+        if (filtro === 'pendentes' && tarefa.concluido) return;
+        if (filtro === 'concluidas' && !tarefa.concluido) return;
+
+        const cor = tarefa.prioridade === 'minima' ? 'green' :
+                    tarefa.prioridade === 'media' ? 'yellow' : 'red';
+
+        lista.innerHTML += `
+          <div class="task ${cor} ${tarefa.concluido ? 'completed' : ''}">
+            <span>${tarefa.titulo}</span>
+            <div>
+              <button onclick="concluirTarefa(${index})">✔</button>
+              <button onclick="editarTarefa(${index})">✏</button>
+              <butt
+
 
 </body>
 </html>
