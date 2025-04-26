@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>SBA - Sistema de Tarefas</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      display: flex;
+      min-height: 100vh;
+      background-color: #f0f2f5;
+    }
+    aside {
+      width: 250px;
+      background-color: white;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      color: green;
+      margin-bottom: 40px;
+    }
+    .menu a {
+      text-decoration: none;
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 18px;
+      display: block;
+      transition: 0.3s;
+    }
+    .menu a:hover {
+      color: green;
+    }
+    main {
+      flex: 1;
+      padding: 40px;
+      animation: fadeIn 0.5s;
+    }
+    .content-card {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      max-width: 900px;
+      min-height: 300px;
+      animation: slideIn 0.5s;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    form input, form select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    form button {
+      background-color: green;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    form button:hover {
+      background-color: darkgreen;
+    }
+    .task {
+      padding: 15px;
+      margin-top: 10px;
+      border-radius: 8px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      animation: fadeIn 0.5s;
+    }
+    .task button {
+      background: rgba(0,0,0,0.2);
+      border: none;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: white;
+      margin-left: 5px;
+    }
+    .green { background-color: green; }
+    .yellow { background-color: goldenrod; }
+    .red { background-color: crimson; }
+    .completed {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0;} to {opacity: 1;}
+    }
+    @keyframes slideIn {
+      from {transform: translateY(20px); opacity: 0;} to {transform: translateY(0); opacity: 1;}
+    }
+    .filters button {
+      margin-right: 10px;
+      padding: 8px 12px;
+      border: 1px solid green;
+      border-radius: 8px;
+      background: none;
+      color: green;
+      cursor: pointer;
+    }
+    .filters button:hover {
+      background-color: green;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<aside>
+  <div class="logo">SBA</div>
+  <nav class="menu">
+    <a href="#" onclick="mostrarInicio()">Início</a>
+    <a href="#" onclick="adicionarTarefa()">Adicionar Tarefa</a>
+    <a href="#" onclick="verRelatorio()">Relatório</a>
+    <a href="#" onclick="limparTudo()">Limpar Tudo</a>
+  </nav>
+</aside>
+
+<main>
+  <div class="content-card" id="main-content">
+    <h1>Bem-vindo ao SBA</h1>
+    <p>Gerencie suas atividades diárias de forma simples e eficiente!</p>
+  </div>
+</main>
+
+<script>
+  let tarefas = JSON.parse(localStorage.getItem('tarefas')) || [];
+
+  function salvarTarefas() {
+    localStorage.setItem('tarefas', JSON.stringify(tarefas));
+  }
+
+  function mostrarInicio(filtro = 'todas') {
+    document.getElementById('main-content').innerHTML = `
+      <h1>Minhas Tarefas</h1>
+      <div class="filters">
+        <button onclick="mostrarInicio('todas')">Todas</button>
+        <button onclick="mostrarInicio('pendentes')">Pendentes</button>
+        <button onclick="mostrarInicio('concluidas')">Concluídas</button>
+      </div>
+      <div id="lista-tarefas"></div>
+    `;
+    renderizarTarefas(filtro);
+  }
+
+  function adicionarTarefa() {
+    document.getElementById('main-content').innerHTML = `
+      <h1>Adicionar Nova Tarefa</h1>
+      <form onsubmit="salvarNovaTarefa(event)">
+        <input type="text" id="titulo" placeholder="Título da tarefa" required>
+        <select id="prioridade" required>
+          <option value="">Selecione a prioridade</option>
+          <option value="minima">Mínima</option>
+          <option value="media">Média</option>
+          <option value="maxima">Máxima</option>
+        </select>
+        <button type="submit">Salvar Tarefa</button>
+      </form>
+    `;
+  }
+
+  function salvarNovaTarefa(event) {
+    event.preventDefault();
+    const titulo = document.getElementById('titulo').value;
+    const prioridade = document.getElementById('prioridade').value;
+    const novaTarefa = { titulo, prioridade, concluido: false };
+    tarefas.push(novaTarefa);
+    salvarTarefas();
+    mostrarInicio();
+  }
+
+  function renderizarTarefas(filtro) {
+    const lista = document.getElementById('lista-tarefas');
+    lista.innerHTML = '';
+
+    tarefas.forEach((tarefa, index) => {
+      if (filtro === 'pendentes' && tarefa.concluido) return;
+      if (filtro === 'concluidas' && !tarefa.concluido) return;
+
+      const cor = tarefa.prioridade === 'minima' ? 'green' :
+                  tarefa.prioridade === 'media' ? 'yellow' : 'red';
+
+      lista.innerHTML += `
+        <div class="task ${cor} ${tarefa.concluido ? 'completed' : ''}">
+          <span>${tarefa.titulo}</span>
+          <div>
+            <button onclick="concluirTarefa(${index})">✔</button>
+            <button onclick="editarTarefa(${index})">✏</button>
+            <button onclick="excluirTarefa(${index})">✖</button>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  function concluirTarefa(index) {
+    tarefas[index].concluido = !tarefas[index].concluido;
+    salvarTarefas();
+    mostrarInicio();
+  }
+
+  function excluirTarefa(index) {
+    if(confirm('Tem certeza que deseja excluir essa tarefa?')){
+      tarefas.splice(index, 1);
+      salvarTarefas();
+      mostrarInicio();
+    }
+  }
+
+  function editarTarefa(index) {
+    const novoTitulo = prompt('Editar tarefa:', tarefas[index].titulo);
+    if (novoTitulo !== null && novoTitulo.trim() !== '') {
+      tarefas[index].titulo = novoTitulo.trim();
+      salvarTarefas();
+      mostrarInicio();
+    }
+  }
+
+  function verRelatorio() {
+    const total = tarefas.length;
+    const concluidas = tarefas.filter(t => t.concluido).length;
+
+    document.getElementById('main-content').innerHTML = `
+      <h1>Relatório de Atividades</h1>
+      <p><strong>Total de Tarefas:</strong> ${total}</p>
+      <p><strong>Tarefas Concluídas:</strong> ${concluidas}</p>
+      <p><strong>Tarefas Pendentes:</strong> ${total - concluidas}</p>
+    `;
+  }
+
+  function limparTudo() {
+    if(confirm('Tem certeza que deseja apagar todas as tarefas?')){
+      tarefas = [];
+      salvarTarefas();
+      mostrarInicio();
+    }
+  }
+
+  mostrarInicio();
+</script>
+
+</body>
+</html>
